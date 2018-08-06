@@ -3,6 +3,7 @@
 .agpy
 secrets.json
 .ACTOR_ID*
+tests/config.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

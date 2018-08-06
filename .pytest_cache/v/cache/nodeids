@@ -1,0 +1,16 @@
+[
+  "tests/test_datacatalog.py::test_constants",
+  "tests/test_datacatalog.py::test_db_connection",
+  "tests/test_datacatalog.py::test_catalog_uuid",
+  "tests/test_datacatalog.py::test_init_CatalogStore",
+  "tests/test_datacatalog.py::test_abspath",
+  "tests/test_datacatalog.py::test_normalize",
+  "tests/test_datacatalog.py::test_new_record",
+  "tests/test_datacatalog.py::test_create_record",
+  "tests/test_datacatalog.py::test_update_record",
+  "tests/test_datacatalog.py::test_delete_record",
+  "tests/test_preflight.py::test_imports_reactor_py",
+  "tests/test_preflight.py::test_config_yml",
+  "tests/test_preflight.py::test_message_jsonschema",
+  "tests/test_preflight.py::test_agave_client"
+]
