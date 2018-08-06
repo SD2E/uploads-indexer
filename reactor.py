@@ -1,4 +1,5 @@
 import os
+from attrdict import AttrDict
 from reactors.runtime import Reactor, agaveutils
 from datacatalog import CatalogStore
 

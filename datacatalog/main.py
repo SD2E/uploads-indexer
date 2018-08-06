@@ -70,7 +70,7 @@ class CatalogStore(object):
         except Exception as exc:
             raise CatalogDataError('Failed to compute values for record', exc)
 
-        record['properties']['size'] = size
+        record['properties']['size_in_bytes'] = size
         record['properties']['checksum'] = cksum
         record['properties']['file_type'] = ftype
         record['properties']['modified_date'] = ts
@@ -82,21 +82,25 @@ class CatalogStore(object):
         # If yes, fetch it and update it
         #   Increment the revision and modified date
         # Otherwise, create a new instance
+        #
+        # Returns the record on success
         filename = self.normalize(filename)
         filerec = self.files.find_one({'filename': filename})
         if filerec is None:
             try:
                 newrec = self.new_record(filename)
-                return self.files.insert_one(newrec)
+                self.files.insert_one(newrec)
+                return newrec
             except Exception:
                 raise CatalogUpdateFailure('Failed to create new record')
         else:
             try:
                 filerec = self.update_record(filename, filerec)
-                return self.files.find_one_and_replace(
+                updated =  self.files.find_one_and_replace(
                     {'_id': filerec['_id']},
                     filerec,
                     return_document=ReturnDocument.AFTER)
+                return updated
             except Exception:
                 raise CatalogUpdateFailure('Failed to update existing record')
 
