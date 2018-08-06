@@ -16,7 +16,7 @@ mongodb:
   port: 27017
   username: admin
   password: ~
-  database: catalogstore
+  database: catalog
 storagesystems:
   data-sd2e-community:
     posix_path: /work/projects/SD2E-Community/prod/data

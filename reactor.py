@@ -28,7 +28,9 @@ def main():
     store = CatalogStore(mongodb=r.settings.mongodb,
                          config=r.settings.catalogstore)
     try:
-        store.create_update_record(agave_full_path)
+        resp = store.create_update_record(agave_full_path)
+        r.logger.info('DataFile._id {} created or updated'.format(
+            resp.get('uuid', None)))
     except Exception as exc:
         r.on_failure('Failed to process file {}'.format(agave_full_path), exc)
 
