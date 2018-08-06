@@ -1,0 +1,16 @@
+---
+debug: false
+logs:
+  level: DEBUG
+  token: ~
+catalogstore:
+  uuid5_namespace: sd2e.org
+  batch: 1000
+mongodb:
+  #host: localhost
+  host: mongodb-staging.sd2e.org
+  port: 27017
+  username: admin
+  password: ~
+  database: catalogstore
+  collection: datafiles
