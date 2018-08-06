@@ -11,3 +11,8 @@ for common methods used by other Python applications to interact with the
 Data Catalog and will be factored out into a standalone module in Q32018 (as
 we are not making the mistake we did with reactors and agaveutils again)
 
+Schema
+------
+
+The schema currently being implemented for the Data Catalog can be found in
+`DataFile.jsonschema` in the datacatalog module.
