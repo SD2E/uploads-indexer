@@ -10,7 +10,7 @@ except ImportError:
     from urllib import quote_plus
 from .constants import *
 from .posixhelpers import *
-
+from .constants import *
 
 class CatalogError(Exception):
     pass
@@ -44,6 +44,7 @@ class CatalogStore(object):
             ftype = get_filetype(absfilename)
             cksum = compute_checksum(absfilename)
             size = get_size_in_bytes(absfilename)
+            lab = lab_from_path(filename)
         except Exception as exc:
             raise CatalogDataError('Failed to compute values for record', exc)
 
@@ -53,7 +54,7 @@ class CatalogStore(object):
                             'modified_date': ts, 'revision': 0},
                 'filename': filename,
                 'uuid': uid,
-                'attributes': {},
+                'attributes': {'lab': lab},
                 'variables': [],
                 'annotations': []}
 
@@ -66,6 +67,7 @@ class CatalogStore(object):
             ftype = get_filetype(absfilename)
             cksum = compute_checksum(absfilename)
             size = get_size_in_bytes(absfilename)
+            lab = lab_from_path(filename)
 
         except Exception as exc:
             raise CatalogDataError('Failed to compute values for record', exc)
@@ -75,6 +77,7 @@ class CatalogStore(object):
         record['properties']['file_type'] = ftype
         record['properties']['modified_date'] = ts
         record['properties']['revision'] = record['properties']['revision'] + 1
+        record['attributes']['lab'] = lab
         return record
 
     def create_update_record(self, filename):
@@ -137,7 +140,6 @@ def catalog_uuid(filename):
         filename = filename[len(STORAGE_ROOT):]
     return str(uuid.uuid5(UUID_NAMESPACE, filename))
 
-
 def db_connection(settings):
     '''Get an active MongoDB connection'''
     try:
@@ -151,3 +153,13 @@ def db_connection(settings):
     except Exception as exc:
         raise CatalogDatabaseError('Unable to connect to database', exc)
 
+def lab_from_path(filename):
+    '''Infer experimental lab from a normalized upload path'''
+    if filename.startswith('/'):
+        raise CatalogDataError('"{}" is not a normalized path')
+    path_els = splitall(filename)
+    # presently a 1:1 mapping but could be extended to support
+    # transforming from path(s) to lab name
+    if path_els[0].lower() in Enumerations.LABS:
+        return path_els[0].lower()
+    raise CatalogDataError('"{}" is not a known lab'.format(path_els[0]))

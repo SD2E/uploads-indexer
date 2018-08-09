@@ -1,5 +1,6 @@
 """Check the functions of the datacatalog submodule"""
 import os
+import pytest
 import sys
 import yaml
 import json
@@ -47,16 +48,16 @@ def test_init_CatalogStore(settings):
     assert cata.store is not None
 
 def test_abspath(settings):
-    expected_result = './tests/store/uploads/201808/protein.png'
-    test_data = '201808/protein.png'
+    expected_result = './tests/store/uploads/emerald/201808/protein.png'
+    test_data = 'emerald/201808/protein.png'
     cata = datacatalog.CatalogStore(
         settings['mongodb'], settings['catalogstore'])
     abspath = cata.abspath(test_data)
     assert abspath == expected_result
 
 def test_normalize(settings):
-    expected_result = '201808/protein.png'
-    test_data = '/uploads/201808/protein.png'
+    expected_result = 'emerald/201808/protein.png'
+    test_data = '/uploads/emerald/201808/protein.png'
     cata = datacatalog.CatalogStore(
         settings['mongodb'], settings['catalogstore'])
     npath = cata.normalize(test_data)
@@ -64,18 +65,25 @@ def test_normalize(settings):
 
 def test_new_record(settings):
     expected_result = {}
-    test_data = '201808/protein.png'
+    test_data = 'emerald/201808/protein.png'
     cata = datacatalog.CatalogStore(
         settings['mongodb'], settings['catalogstore'])
     rec = cata.new_record(test_data)
     assert isinstance(rec, dict)
 
+def test_create_record(settings):
+    from pymongo import results
+    test_data = 'emerald/201808/protein.png'
+    cata = datacatalog.CatalogStore(
+        settings['mongodb'], settings['catalogstore'])
+    rec = cata.create_update_record(test_data)
+    assert isinstance(rec, dict)
 
 def test_update_record(settings):
     import copy
     from time import sleep
     expected_result = {}
-    test_data = '201808/protein.png'
+    test_data = 'emerald/201808/protein.png'
     cata = datacatalog.CatalogStore(
         settings['mongodb'], settings['catalogstore'])
     rec1 = cata.new_record(test_data)
@@ -85,28 +93,35 @@ def test_update_record(settings):
     assert rec1a['properties']['revision'] != rec2['properties']['revision']
     assert rec1a['properties']['modified_date'] != rec2['properties']['modified_date']
 
-def test_create_record(settings):
-    from pymongo import results
-    test_data = '201808/protein.png'
-    cata = datacatalog.CatalogStore(
-        settings['mongodb'], settings['catalogstore'])
-    rec = cata.create_update_record(test_data)
-    assert isinstance(rec, results.InsertOneResult)
-
-def test_update_record(settings):
+def test_update_record_revision_incremented(settings):
     from pymongo import results
     from time import sleep
     sleep(1)
-    test_data = '201808/protein.png'
+    test_data = 'emerald/201808/protein.png'
     cata = datacatalog.CatalogStore(
         settings['mongodb'], settings['catalogstore'])
     rec = cata.create_update_record(test_data)
     assert rec['properties']['revision'] > 0
 
 def test_delete_record(settings):
-    test_data = '201808/protein.png'
+    test_data = 'emerald/201808/protein.png'
     cata = datacatalog.CatalogStore(
         settings['mongodb'], settings['catalogstore'])
     resp = cata.delete_record(test_data)
     assert resp['n'] > 0
 
+def test_lab_from_path(settings):
+    test_data_1 = 'emerald/201808/meep/data.dat'
+    test_data_2 = 'Emerald/201808/meep/data.dat'
+    assert datacatalog.lab_from_path(test_data_1) == 'emerald'
+    assert datacatalog.lab_from_path(test_data_2) == 'emerald'
+
+def test_lab_from_path_exception_unknown(settings):
+    test_data = 'ruby/201808/meep/data.dat'
+    with pytest.raises(datacatalog.CatalogDataError):
+        datacatalog.lab_from_path(test_data)
+
+def test_lab_from_path_exception_not_normalized(settings):
+    test_data = '/emerald/201808/meep/data.dat'
+    with pytest.raises(datacatalog.CatalogDataError):
+        datacatalog.lab_from_path(test_data)

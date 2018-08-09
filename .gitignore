@@ -4,6 +4,7 @@
 secrets.json
 .ACTOR_ID*
 tests/config.yml
+.pytest_cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
