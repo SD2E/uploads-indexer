@@ -67,7 +67,7 @@
 					"type": "string",
 					"description": "is the file type assigned or inferred at upload"
 				},
-				"created_date": {
+				"uploaded_date": {
 					"type": "integer",
 					"minimum": 0,
 					"description": "is the UTC timestamp when this object was uploaded and is required"

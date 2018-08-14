@@ -1,4 +1,6 @@
 import arrow
+import datetime
+import pytz
 import json
 import uuid
 from pymongo import MongoClient, ReturnDocument
@@ -40,7 +42,7 @@ class CatalogStore(object):
         absfilename = self.abspath(filename)
         try:
             uid = catalog_uuid(filename)
-            ts = arrow.utcnow().timestamp
+            ts = datetime.datetime.utcnow()
             ftype = get_filetype(absfilename)
             cksum = compute_checksum(absfilename)
             size = get_size_in_bytes(absfilename)
@@ -63,7 +65,7 @@ class CatalogStore(object):
         absfilename = self.abspath(filename)
         try:
             uid = catalog_uuid(filename)
-            ts = arrow.utcnow().timestamp
+            ts = datetime.datetime.utcnow()
             ftype = get_filetype(absfilename)
             cksum = compute_checksum(absfilename)
             size = get_size_in_bytes(absfilename)
