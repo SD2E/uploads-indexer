@@ -3,20 +3,6 @@ import hashlib
 import binascii
 import filetype
 
-def rebase_file_path(filename, prefix):
-    if filename.startswith('/'):
-        filepath = filename[1:]
-    else:
-        filepath = filename
-    filedir = os.path.dirname(filepath)
-    pfixroot = prefix.replace(filedir, '')
-    if pfixroot == prefix:
-        raise ValueError('{} does not resolve to current directory'.format(filename))
-    if pfixroot.endswith('/'):
-        pfixroot = pfixroot[:-1]
-    rebased_path = os.path.join(pfixroot, filepath)
-    return rebased_path
-
 def get_size_in_bytes(posix_path):
     """Safely returns file size in bytes"""
     try:

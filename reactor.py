@@ -23,15 +23,16 @@ def main():
         r.on_failure('Invalid message received', None)
 
     agave_uri = m.get('uri')
-    r.logger.debug(agave_uri)
+    r.logger.info('Processing {}'.format(agave_uri))
     agave_sys, agave_path, agave_file = agaveutils.from_agave_uri(agave_uri)
     agave_full_path = os.path.join(agave_path, agave_file)
 
     store = CatalogStore(mongodb=r.settings.mongodb,
                          config=r.settings.catalogstore)
     try:
-        resp = store.create_update_record(agave_full_path)
-        r.logger.info('DataFile._id {} created or updated'.format(
+        record = {'filename': agave_full_path}
+        resp = store.create_update_record(record)
+        r.logger.info('DataFile.uuid {} created or updated'.format(
             resp.get('uuid', None)))
     except Exception as exc:
         r.on_failure('Failed to process file {}'.format(agave_full_path), exc)

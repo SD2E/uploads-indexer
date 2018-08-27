@@ -2,3 +2,5 @@ pymongo>=3.7.1
 filetype>=1.0.1
 arrow
 pytz
+jsonschema
+python-slugify

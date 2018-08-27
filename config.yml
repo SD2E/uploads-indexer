@@ -1,22 +1,30 @@
 ---
 debug: false
 logs:
-  level: DEBUG
+  level: INFO
   token: ~
 catalogstore:
+  debug: false
   uuid5_namespace: sd2e.org
   storage_system: data-sd2e-community
   base: /work/projects/SD2E-Community/prod/data
   store: uploads/
+  root: uploads/
   batch: 1000
-  collection: datafiles
+  collection: samplesfiles
+  collections:
+    files: datafiles
+    samples: samples
+    measurements: measurements
 mongodb:
-  #host: localhost
-  host: mongodb-staging.sd2e.org
+  # host: 127.0.0.1
+  # username: catalog
+  # password: catalog
   port: 27017
-  username: admin
-  password: ~
   database: catalog
+  host: mongodb-staging.sd2e.org
+  username: catalog
+  password: ~
 storagesystems:
   data-sd2e-community:
     posix_path: /work/projects/SD2E-Community/prod/data
