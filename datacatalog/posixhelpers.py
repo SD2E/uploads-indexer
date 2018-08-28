@@ -17,26 +17,40 @@ def rebase_file_path(filename, prefix):
     rebased_path = os.path.join(pfixroot, filepath)
     return rebased_path
 
+
 def get_size_in_bytes(posix_path):
     """Safely returns file size in bytes"""
+    if not os.path.exists(posix_path):
+        raise OSError('{} not found'.format(posix_path))
     try:
         if os.path.isfile(posix_path):
-            return os.path.getsize(posix_path)
-        else:
+            gs = os.path.getsize(posix_path)
+            if gs is None:
+                raise OSError('Failed to get size for {}'.format(posix_path))
+            else:
+                return gs
+        elif os.path.isdir(posix_path):
             return 0
-    except Exception:
-        return -1
+    except Exception as exc:
+        raise OSError('Unexplained failure in get_size_in_bytes', exc)
+
 
 def compute_checksum(posix_path, fake_checksum=False):
     """Approved method to generate file checksums"""
     if fake_checksum:
         return binascii.hexlify(os.urandom(20)).decode()
-
-    hash_sha = hashlib.sha1()
-    with open(posix_path, "rb") as f:
-        for chunk in iter(lambda: f.read(131072), b""):
-            hash_sha.update(chunk)
-    return hash_sha.hexdigest()
+    if not os.path.exists(posix_path):
+        raise OSError('{} not found'.format(posix_path))
+    if not os.path.isfile(posix_path):
+        raise OSError('{} is not a file'.format(posix_path))
+    try:
+        hash_sha = hashlib.sha1()
+        with open(posix_path, "rb") as f:
+            for chunk in iter(lambda: f.read(131072), b""):
+                hash_sha.update(chunk)
+        return hash_sha.hexdigest()
+    except Exception as exc:
+        raise OSError('Unexplained failure in compute_checksum', exc)
 
 
 def validate_checksum(posix_path, known_checksum):
@@ -47,12 +61,22 @@ def validate_checksum(posix_path, known_checksum):
     else:
         return False
 
+
 def guess_mimetype(posix_path, default='text/plaintext'):
-    ftype = filetype.guess(posix_path)
-    if ftype is None:
-        return default
-    else:
-        return ftype.mime
+    """Uses fingerprinting to figure out MIME type"""
+    if not os.path.exists(posix_path):
+        raise OSError('{} not found'.format(posix_path))
+    if not os.path.isfile(posix_path):
+        raise OSError('{} is not a file'.format(posix_path))
+    try:
+        ftype = filetype.guess(posix_path)
+        if ftype is None:
+            return default
+        else:
+            return ftype.mime
+    except Exception as exc:
+        raise OSError('Unexplained failure in guess_mimetype', exc)
+
 
 def get_filetype(posix_path):
     # Returns the file type. This is a stub for more sophisticated mechanism

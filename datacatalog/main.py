@@ -292,47 +292,244 @@ class CatalogStore(object):
             pass
         return properties
 
-    def new_record(self, record):
-        filename = record['filename']
+    def create_update_file(self, filename):
+        """Create a DataFile record from a filename that resolves to a physical path
+        Parameters:
+            filename (str) is the filename relative to CatalogStore.root
+        Returns:
+            dict-like PyMongo record
+        """
+        # To keep the update logic simple, this is independent of the code
+        # for handling records from samples.json
+        filename = self.normalize(filename)
         ts = current_time()
 
-        record['uuid'] = catalog_uuid(filename)
-        # update attributes
-        record['attributes'] = data_merge(record.get('attributes', {}), {'lab': lab_from_path(filename)})
-        # build up properties set if possible
-        file_extras = {'created_date': ts, 'modified_date': ts, 'revision': 0, 'original_filename': filename}
-        # in-place transform: move 'state' into properties along with file type and fixity
-        if 'state' in record:
-            file_extras['state'] = record.pop('state')
-        file_props = self.get_fixity_properties(filename)
-        extras = data_merge(file_extras, file_props)
-        # amend existing properties
-        props = data_merge(record.get('properties', {}), extras)
-        record['properties'] = props
-        return record
+        # Exists?
+        filerec = self.coll.find_one({'filename': filename})
+        newrec = False
+        # Init record if not found
+        if filerec is None:
+            newrec = True
+            filerec = {'filename': filename,
+                       'uuid': catalog_uuid(filename),
+                       'properties': {'created_date': ts,
+                                     'modified_date': ts,
+                                     'size_in_bytes': 0,
+                                     'checksum': None,
+                                     'revision': 0},
+                       'attributes': {'lab':  lab_from_path(filename)}}
 
-    def update_record(self, record):
-        # Update revision and timestamp
-        filename = record['filename']
-        record['uuid'] = catalog_uuid(filename)
-        ts = current_time()
-        rev = record['properties'].get('revision', 0) + 1
-        # build up properties if possible
-        file_extras = {'modified_date': ts,
-                       'revision': rev}
-        if 'state' in record:
-            file_extras['state'] = record.pop('state')
-        # If updating a stub record, which means it might not have a created date
-        if 'created_date' not in record['properties']:
-            file_extras['created_date'] = ts
-        # update fixity properties (in case they've changed due to re-upload etc)
-        file_props = self.get_fixity_properties(filename)
-        extras = data_merge(file_extras, file_props)
-        props = data_merge(record.get('properties', {}), extras)
-        record['properties'] = props
-        return record
+        # Update fixity
+        fixity_props = self.get_fixity_properties(filename)
+
+        # Compare fixities
+        difft = False
+        if 'properties' in filerec:
+            for cmp in ['size_in_bytes', 'checksum', 'inferred_file_type', 'original_filename']:
+                if cmp in filerec['properties'] and cmp in fixity_props:
+                    if filerec['properties'].get(cmp, 0) != fixity_props.get(cmp, 0):
+                        print('difft:', cmp, filerec['properties'].get(
+                            cmp, None), fixity_props.get(cmp, None))
+                        difft = True
+                        continue
+
+        # Merge fixity into filerec
+        filerec['properties'] = data_merge(filerec['properties'], fixity_props)
+
+        # Force thru lab attribute
+        if not 'attributes' in filerec:
+            filerec['attributes'] = {'lab':  lab_from_path(filename)}
+            difft = True
+
+        if newrec:
+            result = self.coll.insert_one(filerec)
+            return self.coll.find_one({'_id': result.inserted_id})
+        else:
+            try:
+                if difft:
+                    if 'revision' in filerec['properties']:
+                        filerec['properties']['revision'] += 1
+                    else:
+                        filerec['properties']['revision'] = 0
+
+                    updated = self.coll.find_one_and_replace(
+                        {'uuid': filerec['uuid']},
+                        filerec,
+                        return_document=ReturnDocument.AFTER)
+                    return updated
+                else:
+                    return filerec
+            except Exception as exc:
+                raise FileUpdateFailure('failed to write datafile', exc)
 
     def create_update_record(self, record):
+        """Create or mod a DataFile record from a samples.json record
+        Parameters:
+            record (dict) is the samples.json file record
+        Returns:
+            dict-like PyMongo record
+        """
+        filename = self.normalize(record.pop('name'))
+        # We need these later
+        file_uuid = catalog_uuid(filename)
+        ts = current_time()
+
+        # Record with this filename exists?
+        filerec = self.coll.find_one({'filename': filename})
+        newrec = False
+        # It does not: Create a stub record with fixity data and basic properties
+        if filerec is None:
+            newrec = True
+            filerec = self.create_update_file(filename)
+        # It does, so spot-check its fixity properties
+        else:
+            fixity_props = self.get_fixity_properties(filename)
+            if 'properties' in filerec:
+                filerec['properties'] = data_merge(filerec['properties'], fixity_props)
+            else:
+                filerec['properties'] = fixity_props
+
+        # Switch gears to deal with the contents of 'record'
+        #
+        # Transform record from samples schema into the Data Catalog
+        # internal schema. 1. Lift properties and attributes, transforming
+        # as needed.
+        recprops = {}
+        if 'size' in record:
+            recprops['declared_size'] = record.pop('size')
+        if 'state' in record:
+            recprops['state'] = record.pop('state')
+        if 'type' in record:
+            recprops['declared_file_type'] = record.pop('type')
+        # 2. Compute and merge fixity properties to 'record'
+        fixity_props = self.get_fixity_properties(filename)
+        recprops = data_merge(recprops, fixity_props)
+        if 'properties' in record:
+            record['properties'] = data_merge(record['properties'], recprops)
+        else:
+            record['properties'] = recprops
+        # 3. Merge in all other top-level keys to properties
+        collect_attr = {}
+        for other_attr in list(record.keys()):
+            if other_attr not in ('attributes', 'properties'):
+                collect_attr[other_attr] = record.get(other_attr, None)
+        record['attributes'] = data_merge(record.get('attributes', {}), collect_attr)
+
+        # Merge 'record' onto 'filerec'
+        filerec = data_merge(filerec, record)
+        # Bump date and revision
+        filerec['properties']['revision'] += 1
+        filerec['properties']['modified_date'] = ts
+
+        # Write the database record
+        try:
+            updated = self.coll.find_one_and_replace(
+                {'uuid': filerec['uuid']},
+                filerec,
+                return_document=ReturnDocument.AFTER)
+            return updated
+        except Exception as exc:
+            raise FileUpdateFailure('failed to write datafile', exc)
+
+
+    def ___create_update_record(self, record):
+        """Update the Data Catalog representation of a file
+
+        Parameters:
+            record (dict) containing a 'filename' slot
+            record (str) containing a filename
+
+        Returns:
+            dict of the new or updated record
+        """
+
+        if not isinstance(record, (str, dict)):
+            raise CatalogDataError('record must be a string or dict')
+        if isinstance(record, str):
+            record = {'filename': record}
+        elif isinstance(record, dict):
+            # Accept a string filename as well as the preferred dict structure
+            if 'filename' not in record:
+                raise CatalogDataError('filename is mandatory')
+
+        filename = self.normalize(record['filename'])
+        record['filename'] = filename
+
+        # Migrate and merge state into properties.state
+        if 'state' in record:
+            props_state = {'state': record.pop('state')}
+            if 'properties' in 'record':
+                record['properties'] = data_merge(record.get('properties', {}), props_state)
+            else:
+                record['properties'] = props_state
+
+        filerec = self.coll.find_one({'filename': filename})
+
+        # Determine if the records are materially different
+        difft = False
+        if isinstance(filerec, dict):
+            rec_query = copy.deepcopy(filerec)
+            rec_proposed = copy.deepcopy(record)
+            # Filter out uninformative keys
+            for p in ['_id', 'uuid', 'filename', 'variables', 'annotations']:
+                if p in rec_query:
+                    rec_query.pop(p)
+                if p in rec_proposed:
+                    rec_proposed.pop(p)
+            # Filter out properties we expect to be mutable, deprecated, or uninformative
+            for p in ['created_date', 'modified_date', 'revision', 'originator_id', 'original_filename']:
+                if p in rec_query.get('properties', {}):
+                    rec_query['properties'].pop(p)
+                if p in rec_proposed.get('properties', {}):
+                    rec_proposed['properties'].pop(p)
+            # Filter some top-level keys from query if not in proposed
+            for p in ['attributes', 'properties']:
+                if p in rec_query and p not in rec_proposed:
+                    rec_query.pop(p)
+            # Filter properties from query if not in proposed
+            for p in copy.deepcopy(rec_query).get('properties', {}).keys():
+                 if p in rec_query.get('properties', {}) and p not in rec_proposed.get('properties', {}):
+                    rec_query['properties'].pop(p)
+            # Filter attreibutes from query if not in proposed
+            for p in copy.deepcopy(rec_query).get('attributes', {}).keys():
+                 if p in rec_query.get('attributes', {}) and p not in rec_proposed.get('attributes', {}):
+                    rec_query['attributes'].pop(p)
+
+            print('rec_proposed:', rec_proposed)
+            print('rec_query:', rec_query)
+
+            difft = dict_compare(rec_query, rec_proposed)
+
+        if filerec is None:
+            try:
+                newrec = self.new_record(record)
+                self.coll.insert_one(newrec)
+                return newrec
+            except Exception:
+                raise FileUpdateFailure('Create failed')
+        else:
+            if difft:
+                try:
+                    # Bump timestamp and version
+                    print('update1:', filerec)
+                    filerec = self.update_record(filerec)
+                    filerec['properties']['revision'] += 1
+                    # Merge with record
+                    filerec = data_merge(filerec, record)
+                    print('update2:', filerec)
+                    updated = self.coll.find_one_and_replace(
+                        {'_id': filerec['_id']},
+                        filerec,
+                        return_document=ReturnDocument.AFTER)
+                    print('updated:', updated)
+
+                    return updated
+                except Exception as exc:
+                    raise FileUpdateFailure('Update failed', exc)
+            else:
+                return filerec
+
+    def __create_update_record(self, record):
         """Update the Data Catalog representation of a file
 
         Parameters:
@@ -426,11 +623,9 @@ class CatalogStore(object):
 
 def lab_from_path(filename):
     '''Infer experimental lab from a normalized upload path'''
-    print('lab_from_path', filename)
     if filename.startswith('/'):
         raise CatalogDataError('"{}" is not a normalized path')
     path_els = splitall(filename)
-    print(path_els)
     if path_els[0].lower() in Enumerations.LABPATHS:
         return path_els[0].lower()
     else:

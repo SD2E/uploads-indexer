@@ -30,8 +30,7 @@ def main():
     store = CatalogStore(mongodb=r.settings.mongodb,
                          config=r.settings.catalogstore)
     try:
-        record = {'filename': agave_full_path}
-        resp = store.create_update_record(record)
+        resp = store.create_update_file(agave_full_path)
         r.logger.info('DataFile.uuid {} created or updated'.format(
             resp.get('uuid', None)))
     except Exception as exc:

@@ -1,6 +1,7 @@
 import copy
 import datetime
 from collections import Mapping, MutableMapping
+from bson import ObjectId
 
 class DictionaryMergeError(Exception):
     pass
@@ -38,9 +39,9 @@ def dict_compare(a, b):
     bb = '.'.join(sorted([str(u)
                           for u in flatten(b).values() if is_primitive(u)]))
     if aa == bb:
-        return True
-    else:
         return False
+    else:
+        return True
 
 def flatten(d, parent_key='', sep='_'):
     items = []
@@ -107,7 +108,7 @@ def data_merge(aa, bb):
     a = copy.deepcopy(aa)
     b = copy.deepcopy(bb)
     try:
-        if a is None or isinstance(a, (str, int, float, bool, bytes, datetime.datetime)):
+        if a is None or isinstance(a, (str, int, float, bool, bytes, datetime.datetime, ObjectId)):
             # border case for first run or if a is a primitive
             a = b
         elif isinstance(a, list):
