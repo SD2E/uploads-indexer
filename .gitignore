@@ -1,3 +1,5 @@
+# Handled by Makefile
+datacatalog.1
 # Abaco and Reactors-specific
 .agave
 .agpy

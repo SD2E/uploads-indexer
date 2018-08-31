@@ -1,6 +1,8 @@
 class CatalogError(Exception):
     pass
 
+class CatalogQueryError(CatalogError):
+    pass
 
 class CatalogUpdateFailure(CatalogError):
     # Errors arising when the Data Catalog can't be updated

@@ -2,6 +2,7 @@ import os
 import hashlib
 import binascii
 import filetype
+import datetime
 
 def rebase_file_path(filename, prefix):
     if filename.startswith('/'):
@@ -11,12 +12,11 @@ def rebase_file_path(filename, prefix):
     filedir = os.path.dirname(filepath)
     pfixroot = prefix.replace(filedir, '')
     if pfixroot == prefix:
-        raise ValueError('{} does not resolve to current directory'.format(filename))
+        raise OSError('{} does not resolve to current directory'.format(filename))
     if pfixroot.endswith('/'):
         pfixroot = pfixroot[:-1]
     rebased_path = os.path.join(pfixroot, filepath)
     return rebased_path
-
 
 def get_size_in_bytes(posix_path):
     """Safely returns file size in bytes"""
@@ -33,7 +33,6 @@ def get_size_in_bytes(posix_path):
             return 0
     except Exception as exc:
         raise OSError('Unexplained failure in get_size_in_bytes', exc)
-
 
 def compute_checksum(posix_path, fake_checksum=False):
     """Approved method to generate file checksums"""
@@ -52,7 +51,6 @@ def compute_checksum(posix_path, fake_checksum=False):
     except Exception as exc:
         raise OSError('Unexplained failure in compute_checksum', exc)
 
-
 def validate_checksum(posix_path, known_checksum):
     """Validate checksum of a file and return Boolean response"""
     computed = compute_checksum(posix_path, False)
@@ -60,7 +58,6 @@ def validate_checksum(posix_path, known_checksum):
         return True
     else:
         return False
-
 
 def guess_mimetype(posix_path, default='text/plaintext'):
     """Uses fingerprinting to figure out MIME type"""
@@ -76,7 +73,6 @@ def guess_mimetype(posix_path, default='text/plaintext'):
             return ftype.mime
     except Exception as exc:
         raise OSError('Unexplained failure in guess_mimetype', exc)
-
 
 def get_filetype(posix_path):
     # Returns the file type. This is a stub for more sophisticated mechanism
@@ -99,3 +95,8 @@ def splitall(path):
             path = parts[0]
             allparts.insert(0, parts[1])
     return allparts
+
+
+def get_modification_date(filename):
+    t = os.path.getmtime(filename)
+    return datetime.datetime.fromtimestamp(t)

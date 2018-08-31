@@ -7,13 +7,17 @@ SCRIPT_DIR ?= "scripts"
 PREF_SHELL ?= "bash"
 ACTOR_ID ?=
 
-.PHONY: tests container tests-local tests-reactor tests-deployed
-.SILENT: tests container tests-local tests-reactor tests-deployed
+.PHONY: tests container tests-local tests-reactor tests-deployed datacatalog
+.SILENT: tests container tests-local tests-reactor tests-deployed datacatalog
 
 all: image
 	true
 
-image:
+datacatalog:
+	rm -rf datacatalog ; \
+	cp -R ../datacatalog .
+
+image: datacatalog
 	abaco deploy -R $(ABACO_DEPLOY_OPTS)
 
 shell:
@@ -30,13 +34,16 @@ tests-local:
 tests-deployed:
 	echo "not implemented"
 
-clean: clean-image clean-tests
+clean: clean-datacatalog clean-image clean-tests
 
 clean-image:
 	docker rmi -f $(CONTAINER_IMAGE)
 
 clean-tests:
 	rm -rf .hypothesis .pytest_cache __pycache__ */__pycache__ tmp.* *junit.xml
+
+clean-datacatalog:
+	rm -rf datacatalog
 
 deploy:
 	abaco deploy $(ABACO_DEPLOY_OPTS) -U $(ACTOR_ID)

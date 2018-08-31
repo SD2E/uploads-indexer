@@ -1,7 +1,6 @@
 import copy
 import datetime
 from collections import Mapping, MutableMapping
-from bson import ObjectId
 
 class DictionaryMergeError(Exception):
     pass
@@ -108,9 +107,10 @@ def data_merge(aa, bb):
     a = copy.deepcopy(aa)
     b = copy.deepcopy(bb)
     try:
-        if a is None or isinstance(a, (str, int, float, bool, bytes, datetime.datetime, ObjectId)):
+        if a is None or isinstance(a, (str, int, float, bool, bytes, datetime.datetime)):
             # border case for first run or if a is a primitive
-            a = b
+            if b is not None:
+                a = b
         elif isinstance(a, list):
             # lists can be only appended
             if isinstance(b, list):

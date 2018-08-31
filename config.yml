@@ -14,15 +14,16 @@ catalogstore:
   collection: samplesfiles
   collections:
     files: datafiles
+    files_metadata: files
     samples: samples
     measurements: measurements
 mongodb:
   # host: 127.0.0.1
   # username: catalog
   # password: catalog
-  port: 27017
+  port: 27020
   database: catalog
-  host: mongodb-staging.sd2e.org
+  host: data-catalog.sd2e.org
   username: catalog
   password: ~
 storagesystems:
