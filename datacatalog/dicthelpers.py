@@ -1,9 +1,80 @@
 import copy
 import datetime
 from collections import Mapping, MutableMapping
+from attrdict import AttrDict
+import jsondiff
 
+LISTKEYS = ['child_of']
+FILTERKEYS = ('_id', 'uuid', 'properties', 'measurements_ids',
+              'measurements', 'files', 'samples')
 class DictionaryMergeError(Exception):
     pass
+
+def __data_merge(a, b):
+    aa = AttrDict(a)
+    bb = AttrDict(b)
+    ab = dict(aa + bb)
+    return ab
+
+def right_merge(right_value, left_value):
+    merged = None
+    if isinstance(right_value, list) and isinstance(left_value, list):
+        merged = list(set(left_value) | set(right_value))
+        return merged
+    else:
+        return right_value
+
+def data_merge(left, right, setkeys=LISTKEYS):
+    """
+    Merge two mappings objects together, combining overlapping Mappings,
+    and favoring right-values
+    left: The left Mapping object.
+    right: The right (favored) Mapping object.
+    NOTE: This is not commutative (merge(a,b) != merge(b,a)).
+    """
+    merged = {}
+    left_keys = frozenset(left)
+    right_keys = frozenset(right)
+    # Items only in the left Mapping
+    for key in left_keys - right_keys:
+        merged[key] = left[key]
+    # Items only in the right Mapping
+    for key in right_keys - left_keys:
+        merged[key] = right[key]
+    # in both
+    for key in left_keys & right_keys:
+        left_value = left[key]
+        right_value = right[key]
+        if (isinstance(left_value, Mapping) and
+                isinstance(right_value, Mapping)):  # recursive merge
+            merged[key] = data_merge(left_value, right_value)
+        else:  # overwrite with right value
+            if key in setkeys:
+                merged[key] = right_merge(left_value, right_value)
+            else:
+                merged[key] = right_value
+    return merged
+
+
+def data_merge_diff(a, b, filters=FILTERKEYS):
+    ab = data_merge(a, b)
+    df = json_diff(a, b, filters=FILTERKEYS)
+    return ab, df
+
+def json_diff(j1, j2, filters=FILTERKEYS):
+    j1 = copy.deepcopy(j1)
+    j2 = copy.deepcopy(j2)
+    for f in filters:
+        try:
+            j1.pop(f)
+        except KeyError:
+            pass
+        try:
+            j2.pop(f)
+        except KeyError:
+            pass
+    resp = jsondiff.diff(j1, j2, marshal=True)
+    return resp
 
 def filter_dict(target_dict, keys_to_filter):
     """Filters key(s) from top level of a dict
@@ -99,7 +170,7 @@ def list_merge(lst, merge_lst):
     return list(set(lst) | set(merge_lst))
 
 
-def data_merge(aa, bb):
+def __data_merge(aa, bb):
     """Merges b into a and returns merged result
     NOTE: Tuples and arbitrary objects are not handled as it is ambiguous what should happen
     """

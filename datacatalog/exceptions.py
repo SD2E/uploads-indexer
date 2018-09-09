@@ -2,6 +2,7 @@ class CatalogError(Exception):
     pass
 
 class CatalogQueryError(CatalogError):
+    # Errors making a query to the database or collection
     pass
 
 class CatalogUpdateFailure(CatalogError):
@@ -16,16 +17,4 @@ class CatalogDataError(CatalogError):
 
 class CatalogDatabaseError(CatalogError):
     # Errors reading to or writing from backing store
-    pass
-
-
-class FileUpdateFailure(CatalogUpdateFailure):
-    pass
-
-
-class SampleUpdateFailure(CatalogUpdateFailure):
-    pass
-
-
-class MeasurementUpdateFailure(CatalogUpdateFailure):
     pass

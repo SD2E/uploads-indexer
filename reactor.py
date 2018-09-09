@@ -2,7 +2,7 @@ import os
 import json
 from attrdict import AttrDict
 from reactors.runtime import Reactor, agaveutils
-from datacatalog import FixityStore
+from datacatalog import FileFixityStore, FileFixtyUpdateFailure
 
 def main():
     # Minimal Message Body:
@@ -27,11 +27,12 @@ def main():
     agave_sys, agave_path, agave_file = agaveutils.from_agave_uri(agave_uri)
     agave_full_path = os.path.join(agave_path, agave_file)
 
-    store = FixityStore(mongodb=r.settings.mongodb,
-                         config=r.settings.catalogstore)
+    store = FileFixityStore(mongodb=r.settings.mongodb,
+                            config=r.settings.catalogstore)
+    print(store.name)
     try:
         resp = store.create_update_file(agave_full_path)
-        r.logger.info('Datafile.uuid {} updated'.format(
+        r.logger.info('datafile.uuid {} updated'.format(
             resp.get('uuid', None)))
     except Exception as exc:
         r.on_failure('Failed to process {}'.format(agave_full_path), exc)

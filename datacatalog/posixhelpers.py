@@ -35,7 +35,8 @@ def get_size_in_bytes(posix_path):
         raise OSError('Unexplained failure in get_size_in_bytes', exc)
 
 def compute_checksum(posix_path, fake_checksum=False):
-    """Approved method to generate file checksums"""
+    """Approved method to generate SHA1 file checksums"""
+    # mocking support
     if fake_checksum:
         return binascii.hexlify(os.urandom(20)).decode()
     if not os.path.exists(posix_path):
@@ -78,6 +79,9 @@ def get_filetype(posix_path):
     # Returns the file type. This is a stub for more sophisticated mechanism
     return guess_mimetype(posix_path)
 
+def get_modification_date(posix_path):
+    t = os.path.getmtime(posix_path)
+    return datetime.datetime.fromtimestamp(t)
 
 def splitall(path):
     # Returns a list of all path elements
@@ -96,7 +100,3 @@ def splitall(path):
             allparts.insert(0, parts[1])
     return allparts
 
-
-def get_modification_date(filename):
-    t = os.path.getmtime(filename)
-    return datetime.datetime.fromtimestamp(t)

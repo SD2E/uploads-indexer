@@ -31,7 +31,7 @@ def time_stamp(dt=None, rounded=False):
     else:
         return dt.timestamp()
 
-def catalog_uuid(filename, binary=False):
+def catalog_uuid(filename, binary=True):
     """Returns a UUID5 in the prescribed namespace
     This function will either a text UUID or a BSON-encoded binary UUID,
     depending on the optional value ``binary``.
@@ -49,7 +49,7 @@ def catalog_uuid(filename, binary=False):
     if binary is False:
         return str(new_uuid)
     else:
-        return Binary(new_uuid.bytes, UUID_SUBTYPE)
+        return Binary(new_uuid.bytes, OLD_UUID_SUBTYPE)
 
 def validate_file_to_schema(filename, schema_file=SCHEMA_FILE, permissive=False):
     """Validate a JSON document against a specified JSON schema

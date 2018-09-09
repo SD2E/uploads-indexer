@@ -13,10 +13,13 @@ catalogstore:
   batch: 1000
   collection: samplesfiles
   collections:
-    files: datafiles
-    files_metadata: files
+    updates: updates
+    fixity: datafiles
+    challenges: challenges
+    experiments: experiments
     samples: samples
     measurements: measurements
+    files: files
 mongodb:
   # host: 127.0.0.1
   # username: catalog
@@ -29,3 +32,5 @@ mongodb:
 storagesystems:
   data-sd2e-community:
     posix_path: /work/projects/SD2E-Community/prod/data
+skip_prefixes:
+  - .placeholder

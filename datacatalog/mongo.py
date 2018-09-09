@@ -1,4 +1,4 @@
-from pymongo import MongoClient, ReturnDocument
+from pymongo import MongoClient, ReturnDocument, ASCENDING
 from bson.binary import UUID_SUBTYPE, OLD_UUID_SUBTYPE
 try:
     # Python 3.x
