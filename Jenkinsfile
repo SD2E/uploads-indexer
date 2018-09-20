@@ -1,5 +1,5 @@
 // JOB_BASE_NAME is not reliably available in Multibranch Pipeline
-def clientName = "capture-fixity"
+def clientName = "capture-uploads-fixity"
 pipeline {
     agent any
     options {
