@@ -6,7 +6,7 @@ pipeline {
         disableConcurrentBuilds()
     }
     environment {
-        ACTOR_ID_PROD     = 'gloqkNWaZLqjZ'
+        ACTOR_ID_PROD     = 'EqvOPJoZB5wEV'
         ACTOR_ID_STAGING  = 'EWJxGvp4ZxDwx'
         PYTEST_OPTS       = '-s -vvv'
         ABACO_DEPLOY_OPTS = ''
