@@ -6,14 +6,12 @@ from random import random, shuffle
 
 from attrdict import AttrDict
 from reactors.runtime import Reactor, agaveutils
-from datacatalog.references import ReferenceFixityStore, FileFixtyUpdateFailure
+from datacatalog.linkedstores.fixity import FixityStore
 from datacatalog.agavehelpers import AgaveHelper
 
 EXCLUDES = ['\.log$', '\.err$', '\.out$', '^.container']
 
 def main():
-    # Message Body:
-    # { "uri": "agave://storagesystem/uploads/path/to/target.txt"}
 
     r = Reactor()
     m = AttrDict(r.context.message_dict)
@@ -38,8 +36,7 @@ def main():
     to_index = []
     if ah.isfile(agave_full_path):
         # INDEX THE FILE
-        store = ReferenceFixityStore(mongodb=r.settings.mongodb,
-                                     config=r.settings.get('catalogstore', {}))
+        store = FixityStore(mongodb=r.settings.mongodb)
         try:
             resp = store.index(agave_full_path, storage_system=agave_sys, generated_by=generated_by)
             r.logger.debug('Indexed {} as uuid:{}'.format(
@@ -49,12 +46,16 @@ def main():
     else:
         # LIST DIR AND FIRE OFF INDEX TASKS
         r.logger.debug('Recursively listing {}'.format(agave_full_path))
-        to_index = ah.listdir(agave_full_path, recurse=True, storage_system=agave_sys, directories=False)
-        r.logger.info('Found {} files to index'.format(len(to_index)))
-        r.logger.debug('Messaging self with indexing jobs')
+        to_index = ah.listdir(agave_full_path,
+                              recurse=True,
+                              storage_system=agave_sys,
+                              directories=False)
 
-        # to_list was constructed in listing order, recursively; adding a shuffle
-        # spreads the indexing process evenly over all files
+        r.logger.info('Found {} files to index'.format(len(to_index)))
+        r.logger.debug('Messaging self with indexing targets')
+
+        # Contents of to_list are likely to be in a sorted order. Adding a
+        # shuffle spreads the indexing process evenly over all indexing targets
         shuffle(to_index)
         batch_sub = 0
         for idxpath in to_index:
@@ -77,7 +78,8 @@ def main():
                         r.logger.debug('Dispatched indexing task for {} in execution {}'.format(idxpath, resp['executionId']))
             except Exception as exc:
                 r.logger.critical(
-                    'Failed to dispatch indexing task for {}'.format(agave_full_path))
+                    'Failed to launch indexing task for {}: {}'.format(
+                        agave_full_path, exc))
 
 if __name__ == '__main__':
     main()
