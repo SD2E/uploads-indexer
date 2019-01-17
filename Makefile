@@ -30,6 +30,9 @@ tests-integration: tests-local
 tests-local:
 	USEPWD=1 bash $(SCRIPT_DIR)/run_container_message.sh tests/data/local-message-01.json
 
+tests-local-dir:
+	USEPWD=1 bash $(SCRIPT_DIR)/run_container_message.sh tests/data/local-message-02.json
+
 tests-deployed:
 	echo "not implemented"
 

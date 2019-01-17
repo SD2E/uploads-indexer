@@ -38,7 +38,7 @@ def main():
     to_process = list()
     ah = AgaveHelper(r.client)
     ag_sys, ag_path, ag_file = agaveutils.from_agave_uri(ag_uri)
-    ag_full_relpath = os.path.join(ag_path, ag_file)
+    ag_full_relpath = os.path.normpath(os.path.join(ag_path, ag_file))
     posix_src = ah.mapped_posix_path(ag_full_relpath)
 
     print('POSIX_SRC:', posix_src)
@@ -57,8 +57,8 @@ def main():
             r.on_failure('Indexing failed on {}'.format(ag_full_relpath), exc)
     else:
         # LIST DIR; FIRE OFF TASKS FOR FILES
-        r.logger.debug('Listing {}'.format(posix_src))
-        to_process = ah.listdir(posix_src, recurse=True,
+        r.logger.debug('Listing {}'.format(ag_full_relpath))
+        to_process = ah.listdir(ag_full_relpath, recurse=True,
                                 storage_system=ag_sys, directories=False)
         pprint(to_process)
         r.logger.info(
@@ -96,21 +96,21 @@ def main():
                 r.logger.critical(
                     'Failed to launch task for {}'.format(ag_full_relpath))
 
-        ############
-    agave_uri = m.get('uri')
-    r.logger.info('Indexing {}'.format(agave_uri))
-    agave_sys, agave_path, agave_file = agaveutils.from_agave_uri(agave_uri)
-    agave_full_path = os.path.join(agave_path, agave_file)
+    #     ############
+    # agave_uri = m.get('uri')
+    # r.logger.info('Indexing {}'.format(agave_uri))
+    # agave_sys, agave_path, agave_file = agaveutils.from_agave_uri(agave_uri)
+    # agave_full_path = os.path.join(agave_path, agave_file)
 
-    store = FileFixityStore(mongodb=r.settings.mongodb,
-                            config=r.settings.get('catalogstore', {}))
+    # store = FileFixityStore(mongodb=r.settings.mongodb,
+    #                         config=r.settings.get('catalogstore', {}))
 
-    try:
-        resp = store.create_update_file(agave_full_path)
-        r.logger.info('Indexed {} as uuid:{}'.format(
-            os.path.basename(agave_uri), resp.get('uuid', None)))
-    except Exception as exc:
-        r.on_failure('Indexing failed for {}'.format(agave_full_path), exc)
+    # try:
+    #     resp = store.create_update_file(agave_full_path)
+    #     r.logger.info('Indexed {} as uuid:{}'.format(
+    #         os.path.basename(agave_uri), resp.get('uuid', None)))
+    # except Exception as exc:
+    #     r.on_failure('Indexing failed for {}'.format(agave_full_path), exc)
 
 
 if __name__ == '__main__':
