@@ -41,7 +41,7 @@ def main():
     ag_full_relpath = os.path.normpath(os.path.join(ag_path, ag_file))
     posix_src = ah.mapped_posix_path(ag_full_relpath)
 
-    print('POSIX_SRC:', posix_src)
+    r.logger.debug('POSIX.path: ' + posix_src)
 
     if ah.isfile(ag_full_relpath, ag_sys):
         # Index the file
@@ -76,7 +76,7 @@ def main():
                     'Launch task for {}'.format(procpath))
                 actor_id = r.uid
                 resp = dict()
-                message = {'uri': 'agave://' + ag_sys + '/' + procpath}
+                message = {'uri': 'agave://' + ag_sys + procpath}
                 if r.local is False:
                     resp = r.send_message(
                         actor_id, message, retryMaxAttempts=3)
