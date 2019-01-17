@@ -6,7 +6,7 @@ logs:
 mongodb:
   port: 27020
   database: catalog
-  host: data-catalog.sd2e.org
+  host: catalog.sd2e.org
   username: catalog
   password: ~
 storagesystems:
@@ -14,3 +14,17 @@ storagesystems:
     posix_path: /work/projects/SD2E-Community/prod/data
 skip_prefixes:
   - .placeholder
+batch:
+  size: 1000
+  sleep_duration: 10
+  randomize_sleep: true
+source:
+  bucket: s3://uploads
+  posix_path: /corral/s3/ingest/uploads
+destination:
+  bucket: agave://data-sd2e-community/uploads
+  posix_path: /work/projects/SD2E-Community/prod/data/uploads
+  grants:
+    - username: world
+      pem: READ
+      recursive: False
