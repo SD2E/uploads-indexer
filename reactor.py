@@ -31,6 +31,7 @@ def main():
     r.logger.info('Indexing {}'.format(agave_uri))
     agave_sys, agave_path, agave_file = agaveutils.from_agave_uri(agave_uri)
     agave_full_path = os.path.join(agave_path, agave_file)
+    agave_full_path = re.sub('^(/)+', '/', agave_full_path)
 
     ah = AgaveHelper(client=r.client)
     to_index = []
