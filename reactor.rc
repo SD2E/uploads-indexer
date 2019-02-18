@@ -1,5 +1,5 @@
 # Reactor mandatory settings
-REACTOR_NAME=uploads-indexer-v1:staging
+REACTOR_NAME=uploads-indexer-v1
 # REACTOR_DESCRIPTION=
 # REACTOR_ALIAS=uploads_file_fixity_indexer
 
