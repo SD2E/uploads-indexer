@@ -14,3 +14,8 @@ storagesystems:
     posix_path: /work/projects/SD2E-Community/prod/data
 skip_prefixes:
   - .placeholder
+batch:
+  size: 1000
+  task_sleep_duration: 0.1
+  sleep_duration: 10
+  randomize_sleep: true
