@@ -8,7 +8,7 @@ from attrdict import AttrDict
 from reactors.runtime import Reactor, agaveutils
 from datacatalog.linkedstores.fixity import FixityStore
 from datacatalog.agavehelpers import AgaveHelper
-from datacatalog.managers.common import Manager
+from datacatalog.managers.pipelinejobs.indexer import Indexer
 
 EXCLUDES = ['\.log$', '\.err$', '\.out$', '^.container']
 
@@ -38,16 +38,20 @@ def main():
     to_index = []
     if ah.isfile(agave_full_path):
         # INDEX THE FILE
-        mgr = Manager(mongodb=r.settings.mongodb, agave=r.client)
-        file_store = mgr.stores['file']
-        fixity_store = mgr.stores['fixity']
-
+        mgr = Indexer(mongodb=r.settings.mongodb, agave=r.client)
         try:
-            resp = fixity_store.index(agave_full_path, storage_system=agave_sys, generated_by=generated_by)
-            r.logger.debug('Fixity indexed {} to uuid:{}'.format(
-                os.path.basename(agave_uri), resp.get('uuid', None)))
+            mgr.index_if_exists(agave_full_path, storage_system=agave_sys)
         except Exception as exc:
-            r.on_failure('Indexing failed for {}'.format(agave_full_path), exc)
+            r.on_failure('Indexing failed for {}'.format(agave_uri, exc))
+        # file_store = mgr.stores['file']
+        # fixity_store = mgr.stores['fixity']
+
+        # try:
+        #     resp = fixity_store.index(agave_full_path, storage_system=agave_sys, generated_by=generated_by)
+        #     r.logger.debug('Fixity indexed {} to uuid:{}'.format(
+        #         os.path.basename(agave_uri), resp.get('uuid', None)))
+        # except Exception as exc:
+        #     r.on_failure('Indexing failed for {}'.format(agave_full_path), exc)
     else:
         # LIST DIR AND FIRE OFF INDEX TASKS
         r.logger.debug('Recursively listing {}'.format(agave_full_path))
