@@ -37,7 +37,7 @@ def main():
     to_index = []
     if ah.isfile(agave_full_path):
         # INDEX THE FILE
-        store = FixityStore(mongodb=r.settings.mongodb)
+        store = FixityStore(mongodb=r.settings.mongodb, agave=r.client)
         try:
             resp = store.index(agave_full_path, storage_system=agave_sys, generated_by=generated_by)
             r.logger.debug('Indexed {} as uuid:{}'.format(
