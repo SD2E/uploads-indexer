@@ -1,0 +1,9 @@
+FROM sd2e/reactors:python3-edge
+
+RUN pip3 install --upgrade git+https://github.com/SD2E/python-datacatalog.git@2_1
+
+ENV TACC_PROJECT_NAME=DARPA-BIOCON
+ENV TACC_PRIMARY_STORAGE_SYSTEM=data-sd2e-projects.sd2e-project-21
+ENV TACC_PROJECT_ID=40161
+ENV TACC_PROJECT_GROUP=821133
+ENV TACC_MANAGER_ACCOUNT=sd2ebioc

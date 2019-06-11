@@ -8,14 +8,25 @@ PREF_SHELL ?= "bash"
 ACTOR_ID ?=
 GITREF=$(shell git rev-parse --short HEAD)
 
+SD2_ACTOR_ID ?= DAeO6XprxJvN
+BIOCON_ACTOR_ID ?= PVN3ABOx6vaM8
+SAFEGENES_ACTOR_ID ?= LEAL0B8marpvW
+
 .PHONY: tests container tests-local tests-reactor tests-deployed datacatalog
 .SILENT: tests container tests-local tests-reactor tests-deployed datacatalog
 
 all: image
-	true
 
-image:
-	abaco deploy -R -t $(GITREF) $(ABACO_DEPLOY_OPTS)
+image: image-sd2 image-biocon image-safegenes
+
+image-sd2:
+	abaco deploy -R -c uploads_indexer -t $(GITREF) $(ABACO_DEPLOY_OPTS)
+
+image-biocon:
+	abaco deploy -R -F Dockerfile.biocon -c biocon_uploads_indexer -t $(GITREF) $(ABACO_DEPLOY_OPTS)
+
+image-safegenes:
+	abaco deploy -R -F Dockerfile.safegenes -c safegenes_uploads_indexer -t $(GITREF) $(ABACO_DEPLOY_OPTS)
 
 shell:
 	bash $(SCRIPT_DIR)/run_container_process.sh bash
@@ -35,6 +46,18 @@ tests-deployed:
 
 clean: clean-datacatalog clean-image clean-tests
 
+clean-image: clean-image-sd2 clean-image-biocon
+
+clean-image-sd2:
+	docker rmi -f uploads_indexer:$(GITREF)
+
+clean-image-biocon:
+	docker rmi -f biocon_uploads_indexer:$(GITREF)
+
+clean-image-safegenes:
+	docker rmi -f safegenes_uploads_indexer:$(GITREF)
+
+
 clean-image:
 	docker rmi -f $(CONTAINER_IMAGE)
 
@@ -44,8 +67,16 @@ clean-tests:
 clean-datacatalog:
 	rm -rf datacatalog
 
-deploy:
-	abaco deploy -t $(GITREF) $(ABACO_DEPLOY_OPTS) -U $(ACTOR_ID)
+deploy: deploy-sd2 deploy-biocon deploy-safegenes
+
+deploy-sd2:
+	abaco deploy -t $(GITREF) $(ABACO_DEPLOY_OPTS) -U $(SD2_ACTOR_ID)
+
+deploy-biocon:
+	abaco deploy -F Dockerfile.biocon -c biocon_uploads_indexer -t $(GITREF) $(ABACO_DEPLOY_OPTS) -U $(BIOCON_ACTOR_ID)
+
+deploy-safegenes:
+	abaco deploy -F Dockerfile.safegenes -c safegenes_uploads_indexer -t $(GITREF) $(ABACO_DEPLOY_OPTS) -U $(SAFEGENES_ACTOR_ID)
 
 postdeploy:
 	bash tests/run_after_deploy.sh

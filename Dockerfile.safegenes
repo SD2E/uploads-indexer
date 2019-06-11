@@ -1,0 +1,9 @@
+FROM sd2e/reactors:python3-edge
+
+RUN pip3 install --upgrade git+https://github.com/SD2E/python-datacatalog.git@2_1
+
+ENV TACC_PROJECT_NAME=DARPA-Safe-Genes
+ENV TACC_PRIMARY_STORAGE_SYSTEM=data-projects-safegenes
+ENV TACC_PROJECT_ID=37907
+ENV TACC_PROJECT_GROUP=819902
+ENV TACC_MANAGER_ACCOUNT=sd2esafe
