@@ -8,6 +8,7 @@ from attrdict import AttrDict
 from reactors.runtime import Reactor, agaveutils
 from datacatalog.linkedstores.fixity import FixityStore
 from datacatalog.agavehelpers import AgaveHelper
+from datacatalog.managers.common import Manager
 
 EXCLUDES = ['\.log$', '\.err$', '\.out$', '^.container']
 
@@ -37,10 +38,13 @@ def main():
     to_index = []
     if ah.isfile(agave_full_path):
         # INDEX THE FILE
-        store = FixityStore(mongodb=r.settings.mongodb, agave=r.client)
+        mgr = Manager(mongodb=r.settings.mongodb, agave=r.client)
+        file_store = mgr.stores['file']
+        fixity_store = mgr.stores['fixity']
+
         try:
-            resp = store.index(agave_full_path, storage_system=agave_sys, generated_by=generated_by)
-            r.logger.debug('Indexed {} as uuid:{}'.format(
+            resp = fixity_store.index(agave_full_path, storage_system=agave_sys, generated_by=generated_by)
+            r.logger.debug('Fixity indexed {} to uuid:{}'.format(
                 os.path.basename(agave_uri), resp.get('uuid', None)))
         except Exception as exc:
             r.on_failure('Indexing failed for {}'.format(agave_full_path), exc)
