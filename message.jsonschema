@@ -1,15 +1,20 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
     "title": "AbacoAgavePathMessage",
-    "description": "Contains an agave-canonical path and optional routing information",
+    "description": "Contains an Agave-canonical path",
     "type": "object",
     "properties": {
         "uri": {
             "type": "string",
             "format": "uri",
-            "description": "'uri' is an object-store equivalent to a file path."
+            "description": "'uri' is an object-store equivalent to a file or directory path."
         },
-        "routings" : {}
+        "generated_by": {
+            "type": "array",
+            "$items": "string",
+            "description": "One or more job or pipeline UUIDs"
+        },
+        "__options" : {}
     },
     "required": ["uri"]
 }

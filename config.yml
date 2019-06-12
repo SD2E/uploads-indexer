@@ -5,7 +5,11 @@ logs:
   token: ~
 mongodb:
   port: 27020
+<<<<<<< HEAD
   database: catalog
+=======
+  database: catalog_staging
+>>>>>>> develop
   host: catalog.sd2e.org
   username: catalog
   password: ~
@@ -16,22 +20,6 @@ skip_prefixes:
   - .placeholder
 batch:
   size: 1000
+  task_sleep_duration: 0.1
   sleep_duration: 10
   randomize_sleep: true
-source:
-  bucket: s3://uploads
-  posix_path: /corral/s3/ingest/uploads
-destination:
-  bucket: agave://data-sd2e-community/uploads
-  posix_path: /work/projects/SD2E-Community/prod/data/uploads
-  grants:
-    - username: world
-      pem: READ
-      recursive: False
-catalogstore:
-  uuid5_namespace: sd2e.org
-  storage_system: data-sd2e-community
-  base: /work/projects/SD2E-Community/prod/data
-  store: uploads/
-  batch: 1000
-  collection: fixity
