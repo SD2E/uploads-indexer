@@ -9,7 +9,7 @@ ACTOR_ID ?=
 GITREF=$(shell git rev-parse --short HEAD)
 
 SD2_ACTOR_ID ?= DAeO6XprxJvN
-BIOCON_ACTOR_ID ?= PVN3ABOx6vaM8
+BIOCON_ACTOR_ID ?= peJyNvNOM3XDN
 SAFEGENES_ACTOR_ID ?= LEAL0B8marpvW
 
 .PHONY: tests container tests-local tests-reactor tests-deployed datacatalog
@@ -49,17 +49,13 @@ clean: clean-datacatalog clean-image clean-tests
 clean-image: clean-image-sd2 clean-image-biocon
 
 clean-image-sd2:
-	docker rmi -f uploads_indexer:$(GITREF)
+	docker rmi -f sd2e/uploads_indexer:$(GITREF)
 
 clean-image-biocon:
-	docker rmi -f biocon_uploads_indexer:$(GITREF)
+	docker rmi -f sd2e/biocon_uploads_indexer:$(GITREF)
 
 clean-image-safegenes:
-	docker rmi -f safegenes_uploads_indexer:$(GITREF)
-
-
-clean-image:
-	docker rmi -f $(CONTAINER_IMAGE)
+	docker rmi -f sd2e/safegenes_uploads_indexer:$(GITREF)
 
 clean-tests:
 	rm -rf .hypothesis .pytest_cache __pycache__ */__pycache__ tmp.* *junit.xml
